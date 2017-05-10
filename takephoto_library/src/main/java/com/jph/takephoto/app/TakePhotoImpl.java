@@ -13,12 +13,10 @@ import android.widget.Toast;
 import com.darsh.multipleimageselect.helpers.Constants;
 import com.darsh.multipleimageselect.models.Image;
 import com.jph.takephoto.R;
-import com.jph.takephoto.compress.CompressConfig;
-import com.jph.takephoto.compress.CompressImage;
-import com.jph.takephoto.compress.CompressImageImpl;
 import com.jph.takephoto.model.CropOptions;
 import com.jph.takephoto.model.MultipleCrop;
 import com.jph.takephoto.model.TContextWrap;
+import com.jph.takephoto.model.TException;
 import com.jph.takephoto.model.TExceptionType;
 import com.jph.takephoto.model.TImage;
 import com.jph.takephoto.model.TIntentWap;
@@ -28,7 +26,6 @@ import com.jph.takephoto.permission.PermissionManager;
 import com.jph.takephoto.uitl.ImageRotateUtil;
 import com.jph.takephoto.uitl.IntentUtils;
 import com.jph.takephoto.uitl.TConstant;
-import com.jph.takephoto.model.TException;
 import com.jph.takephoto.uitl.TFileUtils;
 import com.jph.takephoto.uitl.TImageFiles;
 import com.jph.takephoto.uitl.TUriParse;
@@ -66,7 +63,6 @@ public class TakePhotoImpl implements TakePhoto {
     private Uri tempUri;
     private CropOptions cropOptions;
     private TakePhotoOptions takePhotoOptions;
-    private CompressConfig compressConfig;
     private MultipleCrop multipleCrop;
     private PermissionManager.TPermissionType permissionType;
     private TImage.FromType fromType; //CAMERA图片来源相机，OTHER图片来源其他
@@ -94,7 +90,6 @@ public class TakePhotoImpl implements TakePhoto {
             showCompressDialog = savedInstanceState.getBoolean("showCompressDialog");
             outPutUri = savedInstanceState.getParcelable("outPutUri");
             tempUri = savedInstanceState.getParcelable("tempUri");
-            compressConfig = (CompressConfig) savedInstanceState.getSerializable("compressConfig");
         }
     }
 
@@ -105,7 +100,6 @@ public class TakePhotoImpl implements TakePhoto {
         outState.putBoolean("showCompressDialog", showCompressDialog);
         outState.putParcelable("outPutUri", outPutUri);
         outState.putParcelable("tempUri", tempUri);
-        outState.putSerializable("compressConfig", compressConfig);
     }
 
     @Override
@@ -390,11 +384,6 @@ public class TakePhotoImpl implements TakePhoto {
         }
     }
 
-    @Override
-    public void onEnableCompress(CompressConfig config, boolean showCompressDialog) {
-        this.compressConfig = config;
-        this.showCompressDialog = showCompressDialog;
-    }
 
     @Override
     public void setTakePhotoOptions(TakePhotoOptions options) {
@@ -407,34 +396,7 @@ public class TakePhotoImpl implements TakePhoto {
     }
 
     private void takeResult(final TResult result, final String... message) {
-        if (null == compressConfig) {
             handleTakeCallBack(result, message);
-        } else {
-            if (showCompressDialog)
-                wailLoadDialog = TUtils.showProgressDialog(contextWrap.getActivity(), contextWrap.getActivity().getResources().getString(R.string.tip_compress));
-
-            CompressImageImpl.of(contextWrap.getActivity(), compressConfig, result.getImages(), new CompressImage.CompressListener() {
-                @Override
-                public void onCompressSuccess(ArrayList<TImage> images) {
-                    if(!compressConfig.isEnableReserveRaw()) {
-                        deleteRawFile(images);
-                    }
-                    handleTakeCallBack(result);
-                    if (wailLoadDialog != null && !contextWrap.getActivity().isFinishing())
-                        wailLoadDialog.dismiss();
-                }
-
-                @Override
-                public void onCompressFailed(ArrayList<TImage> images, String msg) {
-                    if(!compressConfig.isEnableReserveRaw()) {
-                        deleteRawFile(images);
-                    }
-                    handleTakeCallBack(TResult.of(images), String.format(contextWrap.getActivity().getResources().getString(R.string.tip_compress_failed), message.length > 0 ? message[0] : "", msg, result.getImage().getCompressPath()));
-                    if (wailLoadDialog != null && !contextWrap.getActivity().isFinishing())
-                        wailLoadDialog.dismiss();
-                }
-            }).compress();
-        }
     }
 
     private void deleteRawFile(ArrayList<TImage> images) {
@@ -451,19 +413,6 @@ public class TakePhotoImpl implements TakePhoto {
             listener.takeFail(result, message[0]);
         } else if (multipleCrop != null && multipleCrop.hasFailed) {
             listener.takeFail(result, contextWrap.getActivity().getResources().getString(R.string.msg_crop_failed));
-        } else if (compressConfig != null) {
-            boolean hasFailed = false;
-            for (TImage image : result.getImages()) {
-                if (image == null || !image.isCompressed()) {
-                    hasFailed = true;
-                    break;
-                }
-            }
-            if (hasFailed) {
-                listener.takeFail(result, contextWrap.getActivity().getString(R.string.msg_compress_failed));
-            } else {
-                listener.takeSuccess(result);
-            }
         } else {
             listener.takeSuccess(result);
         }
@@ -471,7 +420,6 @@ public class TakePhotoImpl implements TakePhoto {
     }
 
     private void clearParams() {
-        compressConfig = null;
         takePhotoOptions = null;
         cropOptions = null;
         multipleCrop = null;

@@ -3,7 +3,7 @@ package com.jph.takephoto.app;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import com.jph.takephoto.compress.CompressConfig;
+
 import com.jph.takephoto.model.CropOptions;
 import com.jph.takephoto.model.MultipleCrop;
 import com.jph.takephoto.model.TException;
@@ -91,12 +91,7 @@ public interface TakePhoto {
      */
     void onCrop(MultipleCrop multipleCrop, CropOptions options)throws TException;
     void permissionNotify(PermissionManager.TPermissionType type);
-    /**
-     * 启用图片压缩
-     * @param config 压缩图片配置
-     * @param showCompressDialog 压缩时是否显示进度对话框
-     */
-    void onEnableCompress(CompressConfig config,boolean showCompressDialog);
+
 
     /**
      * 设置TakePhoto相关配置
