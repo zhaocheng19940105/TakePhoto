@@ -4,8 +4,9 @@ import android.content.Context;
 
 /**
  * 常量类
+ *
  * @author JPH
- * Date 2016/6/7 0007 9:39
+ *         Date 2016/6/7 0007 9:39
  */
 public class TConstant {
 
@@ -43,13 +44,12 @@ public class TConstant {
      **/
     public final static int RC_PICK_MULTIPLE = 1008;
 
-
     /**
      * requestCode 请求权限
      **/
     public final static int PERMISSION_REQUEST_TAKE_PHOTO = 2000;
 
-    public final static String getFileProviderName(Context context){
-        return context.getPackageName()+".fileprovider";
+    public final static String getFileProviderName(Context context) {
+        return context.getPackageName() + ".CameraProvider";
     }
- }
+}
